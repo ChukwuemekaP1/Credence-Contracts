@@ -19,7 +19,7 @@ pub struct IdentityBond {
     pub active: bool,
     pub is_rolling: bool,
     pub withdrawal_requested_at: u64,
-    pub notice_period: u64,
+    pub notice_period_duration: u64,
 }
 
 #[contracttype]
@@ -128,7 +128,7 @@ impl CredenceBond {
         amount: i128,
         duration: u64,
         is_rolling: bool,
-        notice_period: u64,
+        notice_period_duration: u64,
     ) -> IdentityBond {
         let bond_start = e.ledger().timestamp();
         let _end_timestamp = bond_start
@@ -144,7 +144,7 @@ impl CredenceBond {
             active: true,
             is_rolling,
             withdrawal_requested_at: 0,
-            notice_period,
+            notice_period_duration,
         };
         let key = DataKey::Bond;
         e.storage().instance().set(&key, &bond);
@@ -530,7 +530,7 @@ impl CredenceBond {
             active: false,
             is_rolling: bond.is_rolling,
             withdrawal_requested_at: bond.withdrawal_requested_at,
-            notice_period: bond.notice_period,
+            notice_period_duration: bond.notice_period_duration,
         };
         e.storage().instance().set(&bond_key, &updated);
 
@@ -591,7 +591,7 @@ impl CredenceBond {
             active: bond.active,
             is_rolling: bond.is_rolling,
             withdrawal_requested_at: bond.withdrawal_requested_at,
-            notice_period: bond.notice_period,
+            notice_period_duration: bond.notice_period_duration,
         };
         e.storage().instance().set(&bond_key, &updated);
 
