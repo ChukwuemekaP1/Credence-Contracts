@@ -6,14 +6,12 @@
 //! - early-withdraw path rejection after lock-up
 //! - cooldown/notice-period enforcement helper behavior
 
-#![cfg(test)]
-
 use crate::{rolling_bond, CredenceBond, CredenceBondClient};
 use soroban_sdk::testutils::{Address as _, Ledger};
 use soroban_sdk::{Address, Env};
 
 fn setup(e: &Env) -> (CredenceBondClient<'_>, Address) {
-    let contract_id = e.register_contract(None, CredenceBond);
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(e, &contract_id);
     let admin = Address::generate(e);
     client.initialize(&admin);

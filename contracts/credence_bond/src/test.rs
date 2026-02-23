@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use super::*;
 use soroban_sdk::testutils::Address as _;
 use soroban_sdk::Env;
@@ -7,7 +5,8 @@ use soroban_sdk::Env;
 #[test]
 fn test_create_bond() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);

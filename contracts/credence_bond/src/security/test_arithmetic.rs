@@ -1,5 +1,6 @@
 //! Arithmetic Security Tests
 //!
+//!
 //! This module contains comprehensive security tests for arithmetic operations
 //! to verify overflow and underflow protection in the Credence Bond contract.
 //!
@@ -10,8 +11,6 @@
 //! 4. Slashing Underflow Tests - Verify safe slashing operations
 //!
 //! All tests use boundary values (max/min values) to ensure robust protection.
-
-#![cfg(test)]
 
 use crate::*;
 use soroban_sdk::testutils::{Address as _, Ledger};
@@ -24,7 +23,8 @@ use soroban_sdk::Env;
 #[test]
 fn test_i128_bond_amount_at_max() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -42,7 +42,8 @@ fn test_i128_bond_amount_at_max() {
 #[should_panic(expected = "top-up caused overflow")]
 fn test_i128_overflow_on_top_up() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -60,7 +61,8 @@ fn test_i128_overflow_on_top_up() {
 #[should_panic(expected = "top-up caused overflow")]
 fn test_i128_overflow_on_max_top_up() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -78,7 +80,8 @@ fn test_i128_overflow_on_max_top_up() {
 #[should_panic(expected = "slashing caused overflow")]
 fn test_i128_overflow_on_massive_slashing() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -91,6 +94,8 @@ fn test_i128_overflow_on_massive_slashing() {
     // Slash near-maximum amount first
     client.slash(&admin, &(i128::MAX / 2));
 
+    client.slash(&admin, &(i128::MAX / 2));
+
     // Current slashed_amount is now i128::MAX / 2
     // Attempt to slash more than i128::MAX / 2, which will cause overflow in checked_add
     client.slash(&admin, &(i128::MAX / 2 + 2));
@@ -99,7 +104,8 @@ fn test_i128_overflow_on_massive_slashing() {
 #[test]
 fn test_i128_large_bond_operations() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -120,7 +126,8 @@ fn test_i128_large_bond_operations() {
 #[test]
 fn test_negative_bond_amount_handling() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -141,7 +148,8 @@ fn test_negative_bond_amount_handling() {
 #[test]
 fn test_u64_max_duration() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -158,7 +166,8 @@ fn test_u64_max_duration() {
 #[should_panic(expected = "duration extension caused overflow")]
 fn test_u64_overflow_on_duration_extension() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -176,12 +185,13 @@ fn test_u64_overflow_on_duration_extension() {
 #[should_panic(expected = "bond end timestamp would overflow")]
 fn test_u64_overflow_on_end_timestamp() {
     let e = Env::default();
+    e.mock_all_auths();
     e.ledger().with_mut(|li| {
         // Set current timestamp to a very high value
         li.timestamp = u64::MAX - 1000;
     });
 
-    let contract_id = e.register_contract(None, CredenceBond);
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -196,7 +206,8 @@ fn test_u64_overflow_on_end_timestamp() {
 #[test]
 fn test_u64_large_duration_extension() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -217,12 +228,13 @@ fn test_u64_large_duration_extension() {
 #[test]
 fn test_timestamp_boundary_conditions() {
     let e = Env::default();
+    e.mock_all_auths();
     // Set timestamp to near-max value
     e.ledger().with_mut(|li| {
         li.timestamp = u64::MAX - 10000;
     });
 
-    let contract_id = e.register_contract(None, CredenceBond);
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -244,7 +256,8 @@ fn test_timestamp_boundary_conditions() {
 #[should_panic(expected = "insufficient balance for withdrawal")]
 fn test_withdrawal_exceeds_available_balance() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -261,7 +274,8 @@ fn test_withdrawal_exceeds_available_balance() {
 #[should_panic(expected = "insufficient balance for withdrawal")]
 fn test_withdrawal_after_slashing() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -280,7 +294,8 @@ fn test_withdrawal_after_slashing() {
 #[test]
 fn test_withdrawal_exact_available_balance() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -297,7 +312,8 @@ fn test_withdrawal_exact_available_balance() {
 #[test]
 fn test_withdrawal_zero_amount() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -315,7 +331,8 @@ fn test_withdrawal_zero_amount() {
 #[should_panic(expected = "insufficient balance for withdrawal")]
 fn test_multiple_withdrawals_causing_underflow() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -334,7 +351,8 @@ fn test_multiple_withdrawals_causing_underflow() {
 #[test]
 fn test_withdrawal_with_max_i128_bond() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -352,7 +370,8 @@ fn test_withdrawal_with_max_i128_bond() {
 #[should_panic(expected = "insufficient balance for withdrawal")]
 fn test_withdrawal_when_fully_slashed() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -375,7 +394,8 @@ fn test_withdrawal_when_fully_slashed() {
 #[test]
 fn test_slashing_normal_amount() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -393,7 +413,8 @@ fn test_slashing_normal_amount() {
 #[test]
 fn test_slashing_exceeds_bonded_amount() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -411,7 +432,8 @@ fn test_slashing_exceeds_bonded_amount() {
 #[test]
 fn test_multiple_slashing_operations() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -434,7 +456,8 @@ fn test_multiple_slashing_operations() {
 #[test]
 fn test_slashing_zero_amount() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -451,7 +474,8 @@ fn test_slashing_zero_amount() {
 #[test]
 fn test_slashing_after_withdrawal() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -472,7 +496,8 @@ fn test_slashing_after_withdrawal() {
 #[test]
 fn test_slashing_with_max_values() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -493,7 +518,8 @@ fn test_slashing_with_max_values() {
 #[test]
 fn test_complex_arithmetic_scenario() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -524,7 +550,8 @@ fn test_complex_arithmetic_scenario() {
 #[should_panic(expected = "insufficient balance for withdrawal")]
 fn test_withdrawal_leaves_insufficient_for_slashed() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
@@ -544,7 +571,8 @@ fn test_withdrawal_leaves_insufficient_for_slashed() {
 #[test]
 fn test_boundary_arithmetic_with_zero_values() {
     let e = Env::default();
-    let contract_id = e.register_contract(None, CredenceBond);
+    e.mock_all_auths();
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(&e, &contract_id);
 
     let admin = Address::generate(&e);
