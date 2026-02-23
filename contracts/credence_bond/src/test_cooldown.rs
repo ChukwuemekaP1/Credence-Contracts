@@ -474,7 +474,11 @@ fn test_can_withdraw_zero_period() {
 #[test]
 fn test_saturating_add_no_overflow() {
     // u64::MAX as request_time + large period should not panic
-    assert!(cooldown::is_cooldown_active(u64::MAX - 1, u64::MAX - 10, 100));
+    assert!(cooldown::is_cooldown_active(
+        u64::MAX - 1,
+        u64::MAX - 10,
+        100
+    ));
     assert!(cooldown::can_withdraw(u64::MAX, u64::MAX - 10, 5));
 }
 

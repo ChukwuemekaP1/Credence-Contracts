@@ -71,10 +71,8 @@ pub fn emit_cooldown_executed(e: &Env, requester: &Address, amount: i128) {
 
 /// Emit an event when a cooldown withdrawal is cancelled.
 pub fn emit_cooldown_cancelled(e: &Env, requester: &Address) {
-    e.events().publish(
-        (Symbol::new(e, "cooldown_cancelled"),),
-        requester.clone(),
-    );
+    e.events()
+        .publish((Symbol::new(e, "cooldown_cancelled"),), requester.clone());
 }
 
 /// Emit an event when the cooldown period is updated by the admin.
