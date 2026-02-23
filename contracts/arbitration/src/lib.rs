@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol, Map};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Map, String, Symbol};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -20,7 +20,7 @@ pub enum DataKey {
     Arbitrator(Address),
     Dispute(u64),
     DisputeCounter,
-    DisputeVotes(u64), // Map<u32, i128> (outcome -> total_weight)
+    DisputeVotes(u64),         // Map<u32, i128> (outcome -> total_weight)
     VoterCasted(u64, Address), // (dispute_id, voter) -> bool
 }
 
@@ -39,15 +39,21 @@ impl CredenceArbitration {
 
     /// Register or update an arbitrator with a specific voting weight.
     pub fn register_arbitrator(e: Env, arbitrator: Address, weight: i128) {
-        let admin: Address = e.storage().instance().get(&DataKey::Admin).expect("not initialized");
+        let admin: Address = e
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("not initialized");
         admin.require_auth();
 
         if weight <= 0 {
             panic!("weight must be positive");
         }
 
-        e.storage().instance().set(&DataKey::Arbitrator(arbitrator.clone()), &weight);
-        
+        e.storage()
+            .instance()
+            .set(&DataKey::Arbitrator(arbitrator.clone()), &weight);
+
         e.events().publish(
             (Symbol::new(&e, "arbitrator_registered"), arbitrator),
             weight,
@@ -56,15 +62,19 @@ impl CredenceArbitration {
 
     /// Remove an arbitrator.
     pub fn unregister_arbitrator(e: Env, arbitrator: Address) {
-        let admin: Address = e.storage().instance().get(&DataKey::Admin).expect("not initialized");
+        let admin: Address = e
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("not initialized");
         admin.require_auth();
 
-        e.storage().instance().remove(&DataKey::Arbitrator(arbitrator.clone()));
+        e.storage()
+            .instance()
+            .remove(&DataKey::Arbitrator(arbitrator.clone()));
 
-        e.events().publish(
-            (Symbol::new(&e, "arbitrator_unregistered"), arbitrator),
-            (),
-        );
+        e.events()
+            .publish((Symbol::new(&e, "arbitrator_unregistered"), arbitrator), ());
     }
 
     /// Create a new dispute for arbitration.
@@ -91,10 +101,8 @@ impl CredenceArbitration {
 
         e.storage().instance().set(&DataKey::Dispute(id), &dispute);
 
-        e.events().publish(
-            (Symbol::new(&e, "dispute_created"), id),
-            creator,
-        );
+        e.events()
+            .publish((Symbol::new(&e, "dispute_created"), id), creator);
 
         id
     }
@@ -108,12 +116,16 @@ impl CredenceArbitration {
         }
 
         // Verify voter is a registered arbitrator
-        let weight: i128 = e.storage().instance()
+        let weight: i128 = e
+            .storage()
+            .instance()
             .get(&DataKey::Arbitrator(voter.clone()))
             .unwrap_or_else(|| panic!("voter is not an authorized arbitrator"));
 
         // Verify dispute exists and is within voting period
-        let mut dispute: Dispute = e.storage().instance()
+        let mut dispute: Dispute = e
+            .storage()
+            .instance()
             .get(&DataKey::Dispute(dispute_id))
             .unwrap_or_else(|| panic!("dispute not found"));
 
@@ -135,13 +147,18 @@ impl CredenceArbitration {
 
         // Tally the vote
         let votes_key = DataKey::DisputeVotes(dispute_id);
-        let mut votes: Map<u32, i128> = e.storage().instance()
+        let mut votes: Map<u32, i128> = e
+            .storage()
+            .instance()
             .get(&votes_key)
             .unwrap_or(Map::new(&e));
-        
+
         let current_tally = votes.get(outcome).unwrap_or(0);
-        votes.set(outcome, current_tally.checked_add(weight).expect("weight overflow"));
-        
+        votes.set(
+            outcome,
+            current_tally.checked_add(weight).expect("weight overflow"),
+        );
+
         e.storage().instance().set(&votes_key, &votes);
 
         e.events().publish(
@@ -152,7 +169,9 @@ impl CredenceArbitration {
 
     /// Resolve a dispute after the voting period has ended.
     pub fn resolve_dispute(e: Env, dispute_id: u64) -> u32 {
-        let mut dispute: Dispute = e.storage().instance()
+        let mut dispute: Dispute = e
+            .storage()
+            .instance()
             .get(&DataKey::Dispute(dispute_id))
             .unwrap_or_else(|| panic!("dispute not found"));
 
@@ -166,7 +185,9 @@ impl CredenceArbitration {
         }
 
         let votes_key = DataKey::DisputeVotes(dispute_id);
-        let votes: Map<u32, i128> = e.storage().instance()
+        let votes: Map<u32, i128> = e
+            .storage()
+            .instance()
             .get(&votes_key)
             .unwrap_or(Map::new(&e));
 
@@ -191,7 +212,9 @@ impl CredenceArbitration {
 
         dispute.resolved = true;
         dispute.outcome = winning_outcome;
-        e.storage().instance().set(&DataKey::Dispute(dispute_id), &dispute);
+        e.storage()
+            .instance()
+            .set(&DataKey::Dispute(dispute_id), &dispute);
 
         e.events().publish(
             (Symbol::new(&e, "dispute_resolved"), dispute_id),
@@ -203,7 +226,8 @@ impl CredenceArbitration {
 
     /// Get dispute details.
     pub fn get_dispute(e: Env, dispute_id: u64) -> Dispute {
-        e.storage().instance()
+        e.storage()
+            .instance()
             .get(&DataKey::Dispute(dispute_id))
             .unwrap_or_else(|| panic!("dispute not found"))
     }
@@ -211,10 +235,12 @@ impl CredenceArbitration {
     /// Get current total weight for an outcome.
     pub fn get_tally(e: Env, dispute_id: u64, outcome: u32) -> i128 {
         let votes_key = DataKey::DisputeVotes(dispute_id);
-        let votes: Map<u32, i128> = e.storage().instance()
+        let votes: Map<u32, i128> = e
+            .storage()
+            .instance()
             .get(&votes_key)
             .unwrap_or(Map::new(&e));
-        
+
         votes.get(outcome).unwrap_or(0)
     }
 }

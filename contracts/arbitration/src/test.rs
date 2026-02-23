@@ -21,7 +21,7 @@ fn test_arbitration_flow() {
 
     // Register arbitrators
     client.register_arbitrator(&arb1, &10); // weight 10
-    client.register_arbitrator(&arb2, &5);  // weight 5
+    client.register_arbitrator(&arb2, &5); // weight 5
 
     // Create dispute
     let description = String::from_str(&e, "Dispute #1");
@@ -41,7 +41,7 @@ fn test_arbitration_flow() {
 
     // Resolve dispute (should fail if period not ended)
     // e.ledger().with_mut(|li| li.timestamp += 3601);
-    
+
     // Fast forward ledger time
     e.ledger().set(soroban_sdk::testutils::LedgerInfo {
         timestamp: e.ledger().timestamp() + 3601,
