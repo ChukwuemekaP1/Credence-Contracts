@@ -8,7 +8,7 @@ use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{Address, Env};
 
 fn setup(e: &Env) -> (CredenceBondClient<'_>, Address) {
-    let contract_id = e.register_contract(None, CredenceBond);
+    let contract_id = e.register(CredenceBond, ());
     let client = CredenceBondClient::new(e, &contract_id);
     let admin = Address::generate(e);
     client.initialize(&admin);
@@ -65,7 +65,13 @@ fn test_tier_unchanged_within_threshold() {
     let e = Env::default();
     let (client, _admin) = setup(&e);
     let identity = Address::generate(&e);
-    client.create_bond(&identity, &(TIER_BRONZE_MAX / 2), &86400_u64, &false, &0_u64);
+    client.create_bond(
+        &identity,
+        &(TIER_BRONZE_MAX / 2),
+        &86400_u64,
+        &false,
+        &0_u64,
+    );
     assert_eq!(client.get_tier(), BondTier::Bronze);
     client.top_up(&(TIER_BRONZE_MAX / 2 - 1));
     assert_eq!(client.get_tier(), BondTier::Bronze);
