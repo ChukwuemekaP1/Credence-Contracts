@@ -1,6 +1,4 @@
-use soroban_sdk::{
-    contracterror, contracttype, Address, Bytes, BytesN, Env,
-};
+use soroban_sdk::{contracterror, contracttype, Address, Bytes, BytesN, Env};
 
 /// Storage key namespace for idempotent transactions
 #[contracttype]
