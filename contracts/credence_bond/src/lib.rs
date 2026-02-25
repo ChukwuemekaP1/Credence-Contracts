@@ -1,5 +1,6 @@
 #![no_std]
 
+pub mod access_control;
 pub mod early_exit_penalty;
 mod fees;
 pub mod governance_approval;
@@ -13,6 +14,9 @@ mod weighted_attestation;
 
 pub mod types;
 
+use crate::access_control::{
+    add_verifier_role, is_verifier, remove_verifier_role, require_admin, require_verifier,
+};
 use soroban_sdk::{
     contract, contractimpl, contracttype, Address, Env, IntoVal, String, Symbol, Val, Vec,
 };
@@ -114,7 +118,7 @@ impl CredenceBond {
         result
     }
 
-    fn require_admin(e: &Env, admin: &Address) {
+    fn require_admin_internal(e: &Env, admin: &Address) {
         let stored_admin: Address = e
             .storage()
             .instance()
@@ -128,11 +132,15 @@ impl CredenceBond {
     /// Initialize the contract (admin).
     pub fn initialize(e: Env, admin: Address) {
         e.storage().instance().set(&DataKey::Admin, &admin);
+        // Keep legacy admin key for shared access-control helpers.
+        e.storage()
+            .instance()
+            .set(&Symbol::new(&e, "admin"), &admin);
     }
 
     /// Set early exit penalty config. Only admin should call.
     pub fn set_early_exit_config(e: Env, admin: Address, treasury: Address, penalty_bps: u32) {
-        Self::require_admin(&e, &admin);
+        Self::require_admin_internal(&e, &admin);
         early_exit_penalty::set_config(&e, treasury, penalty_bps);
     }
 
@@ -142,7 +150,9 @@ impl CredenceBond {
             .instance()
             .get(&DataKey::Admin)
             .unwrap_or_else(|| panic!("not initialized"));
-
+        require_admin(&e, &admin);
+        admin.require_auth();
+        add_verifier_role(&e, &admin, &attester);
         e.storage()
             .instance()
             .set(&DataKey::Attester(attester.clone()), &true);
@@ -156,7 +166,9 @@ impl CredenceBond {
             .instance()
             .get(&DataKey::Admin)
             .unwrap_or_else(|| panic!("not initialized"));
-
+        require_admin(&e, &admin);
+        admin.require_auth();
+        remove_verifier_role(&e, &admin, &attester);
         e.storage()
             .instance()
             .remove(&DataKey::Attester(attester.clone()));
@@ -165,10 +177,7 @@ impl CredenceBond {
     }
 
     pub fn is_attester(e: Env, attester: Address) -> bool {
-        e.storage()
-            .instance()
-            .get(&DataKey::Attester(attester))
-            .unwrap_or(false)
+        is_verifier(&e, &attester)
     }
 
     /// Set the token contract address (admin only). Required before `create_bond`, `top_up`,
@@ -280,6 +289,7 @@ impl CredenceBond {
         nonce: u64,
     ) -> Attestation {
         attester.require_auth();
+        require_verifier(&e, &attester);
 
         let is_authorized: bool = e
             .storage()
@@ -417,12 +427,12 @@ impl CredenceBond {
     }
 
     pub fn set_attester_stake(e: Env, admin: Address, attester: Address, amount: i128) {
-        Self::require_admin(&e, &admin);
+        Self::require_admin_internal(&e, &admin);
         weighted_attestation::set_attester_stake(&e, &attester, amount);
     }
 
     pub fn set_weight_config(e: Env, admin: Address, multiplier_bps: u32, max_weight: u32) {
-        Self::require_admin(&e, &admin);
+        Self::require_admin_internal(&e, &admin);
         weighted_attestation::set_weight_config(&e, multiplier_bps, max_weight);
     }
 
@@ -628,7 +638,7 @@ impl CredenceBond {
         quorum_bps: u32,
         min_governors: u32,
     ) {
-        Self::require_admin(&e, &admin);
+        Self::require_admin_internal(&e, &admin);
         governance_approval::initialize_governance(&e, governors, quorum_bps, min_governors);
     }
 
@@ -675,7 +685,7 @@ impl CredenceBond {
     }
 
     pub fn set_fee_config(e: Env, admin: Address, treasury: Address, fee_bps: u32) {
-        Self::require_admin(&e, &admin);
+        Self::require_admin_internal(&e, &admin);
         fees::set_config(&e, treasury, fee_bps);
     }
 
@@ -953,6 +963,9 @@ mod integration;
 
 #[cfg(test)]
 mod security;
+
+#[cfg(test)]
+mod test_access_control;
 
 #[cfg(test)]
 mod test_early_exit_penalty;
