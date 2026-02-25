@@ -17,10 +17,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, Address, Env, IntoVal, String, Symbol, Val, Vec,
 };
 
-
-
 use soroban_sdk::token::TokenClient;
-
 
 pub use types::Attestation;
 
